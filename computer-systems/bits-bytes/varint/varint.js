@@ -9,20 +9,17 @@ const encode = (num) => {
   let remainingNum = num;
 
   while (remainingNum > BigInt(0)) {
-    // use a bitmask here instead
-    let lowestBits = BigInt(remainingNum) % BigInt(128);
+    let lowestBits = remainingNum & BigInt(0x7f);
 
     remainingNum >>= BigInt(7);
 
     if (remainingNum > BigInt(0)) {
-      // use bitwise operator here instead 
-      lowestBits += BigInt(128)
+      lowestBits |= BigInt(0x80)
     }
 
     // Buffer.from needs these to be Numbers, not BigInts
     bitChunks.push(Number(lowestBits));
   }
-
   return Buffer.from(bitChunks);
 }
 
