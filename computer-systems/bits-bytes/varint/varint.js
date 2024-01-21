@@ -1,32 +1,29 @@
 const fs = require('node:fs');
 
-const intOne = fs.readFileSync('1.uint64');
-const int150 = fs.readFileSync('150.uint64');
-const intMax = fs.readFileSync('maxint.uint64');
+const intOne = fs.readFileSync('1.uint64').readBigUInt64BE();
+const int150 = fs.readFileSync('150.uint64').readBigUInt64BE();
+const intMax = fs.readFileSync('maxint.uint64').readBigUInt64BE();
 
-// use more accurate variable names
-
-const encode = (buffer) => {
-
+const encode = (num) => {
   const bitChunks = [];
-  let remainingNum = buffer.readBigUInt64BE();
-  while (remainingNum > BigInt(0)) {
-    // use a bitmask
-    const lowestBits = BigInt(remainingNum) % BigInt(128);
+  let remainingNum = num;
 
-    bitChunks.push(lowestBits);
+  while (remainingNum > BigInt(0)) {
+    // use a bitmask here instead
+    let lowestBits = BigInt(remainingNum) % BigInt(128);
+
     remainingNum >>= BigInt(7);
+
+    if (remainingNum > BigInt(0)) {
+      // use bitwise operator here instead 
+      lowestBits += BigInt(128)
+    }
+
+    // Buffer.from needs these to be Numbers, not BigInts
+    bitChunks.push(Number(lowestBits));
   }
 
-  // don't need to iterate through this a 2nd time
-  const byteArray = bitChunks.map((bitChunk, index) => {
-    if (index === bitChunks.length - 1) {
-      return Number(bitChunk);
-    }
-    // use bitwise operator instead
-    return Number(bitChunk + BigInt(128));
-  })
-  return Buffer.from(byteArray);
+  return Buffer.from(bitChunks);
 }
 
 const decode = (buffer) => {
@@ -40,7 +37,7 @@ const decode = (buffer) => {
     }
   }
 
-  const bigInt = sevenBitSections.reduce((acc, curr, i) => {
+  return sevenBitSections.reduce((acc, curr, i) => {
     acc += BigInt(curr);
     if (i === sevenBitSections.length - 1) {
       return acc;
@@ -48,21 +45,16 @@ const decode = (buffer) => {
     acc <<= BigInt(7);
     return acc;
   }, BigInt(0))
-
-  const buf = Buffer.alloc(8);
-  buf.writeBigUInt64BE(bigInt);
-
-  return buf;
 }
 
 const intOneEncode = encode(intOne);
 const intOneDecode = decode(intOneEncode);
-console.log('intOne equals intOneDecode', intOne.compare(intOneDecode) === 0);
+console.log('intOne equals intOneDecode', intOne === intOneDecode);
 
 const int150Encode = encode(int150);
 const int150Decode = decode(int150Encode);
-console.log('int150 equals int150Decode', int150.compare(int150Decode) === 0);
+console.log('int150 equals int150Decode', int150 === int150Decode);
 
 const intMaxEncode = encode(intMax);
 const intMaxDecode = decode(intMaxEncode);
-console.log('intMax equals intMaxDecode', intMax.compare(intMaxDecode) === 0);
+console.log('intMax equals intMaxDecode', intMax === intMaxDecode);
