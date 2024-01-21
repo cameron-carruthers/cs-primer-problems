@@ -29,8 +29,7 @@ const decode = (buffer) => {
     if (sevenBitSections.length === buffer.length - 1) {
       sevenBitSections.unshift(value);
     } else {
-      // use bitwise operator instead
-      sevenBitSections.unshift(value - 128);
+      sevenBitSections.unshift(value & 0x7f);
     }
   }
 
